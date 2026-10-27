@@ -11,6 +11,11 @@ Optional:
     - ip (block):
         - ip_ranges (required)
         - trusted (optional)
+    - timeouts (block):
+        - create (optional)
+        - delete (optional)
+        - read (optional)
+        - update (optional)
 EOT
 
   type = map(object({
@@ -23,6 +28,12 @@ EOT
     ip = optional(object({
       ip_ranges = list(string)
       trusted   = optional(bool)
+    }))
+    timeouts = optional(object({
+      create = optional(string)
+      delete = optional(string)
+      read   = optional(string)
+      update = optional(string)
     }))
   }))
   validation {
@@ -41,6 +52,14 @@ EOT
     ])
     error_message = "must not be empty"
   }
-  # Note: 2 additional provider-side validators are enforced at apply time but not mirrored as validation{} blocks here (bespoke or non-mechanically-translatable).
+  validation {
+    condition = alltrue([
+      for k, v in var.named_locations : (
+        v.country == null || (v.country.country_lookup_method == null || (contains(["authenticatorAppGps", "clientIpAddress"], v.country.country_lookup_method)))
+      )
+    ])
+    error_message = "must be one of: \"authenticatorAppGps\", \"clientIpAddress\""
+  }
+  # Note: 1 additional provider-side validator is enforced at apply time but not mirrored as validation{} blocks here (bespoke or non-mechanically-translatable).
 }
 
